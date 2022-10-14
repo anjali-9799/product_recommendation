@@ -1,9 +1,10 @@
 # Create your views here.
+from unicodedata import category
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Product
-from .serializers import ProductSerializer
+from .serializers import ProductSerializer, ProductIdSerializer
 
 
 class ProductListApiView(APIView):
@@ -33,3 +34,14 @@ class ProductListApiView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RecommendAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        pro_id = kwargs.get('id')
+        category = Product.objects.filter(id=pro_id).values('categories')
+        cat = category[0]
+        cat_value = cat['categories']
+        result = Product.objects.filter(categories=cat_value)
+        serializer = ProductIdSerializer(result, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
